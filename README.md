@@ -10,51 +10,55 @@ El servidor es responsable de coordinar la comunicación entre los jugadores y g
 - **Espera de Jugadores:** El servidor espera a que los jugadores se conecten antes de iniciar el juego.
 - **Inicio del Juego y comunicaciones con la API:** Inicia el juego después de que se conecten los jugadores, manejando la distribución de preguntas y el seguimiento de las puntuaciones.
 - **Finalización del Juego:** Anuncia el fin del juego y felicita al ganador.
-La funcion más destacable de este codigo es la iniciar partida, definida en **multicast_functions**
-        def init_game(sock, num_jugadores, num_preguntas):
-            # Inicialización de variables
-            global puntuaciones
-            puntuaciones = {}  # Diccionario para almacenar las puntuaciones de los jugadores
-            fin_juego = False  # Variable para controlar el estado del juego
-            
-            # Anunciar el inicio del juego al grupo de multidifusión
-            send_multicast_message(sock, "Server: ¡El juego va a comenzar!\n")
-            time.sleep(1)  # Esperar un segundo para asegurar que todos los jugadores reciban el mensaje
-            
-            # Bucle para cada pregunta del juego
-            for i in range(num_preguntas):
-                # Enviar mensaje de inicio de ronda al grupo de multidifusión
-                send_multicast_message(sock, f"\nRonda {i+1}/{num_preguntas}\n")
-                time.sleep(1)  # Esperar un segundo
-                
-                # Enviar pregunta y esperar respuestas de los jugadores
-                question, respuesta_correcta = send_question(sock)
-                respuestas = listen_answers(sock, num_jugadores)
-                
-                # Actualizar puntuaciones según las respuestas de los jugadores
-                for jugador in respuestas.keys():
-                    respuesta = respuestas[jugador]
-                    if respuesta == respuesta_correcta:
-                        if jugador in puntuaciones:
-                            puntuaciones[jugador] += 1
-                        else:
-                            puntuaciones[jugador] = 1
-                    else:
-                        if jugador in puntuaciones:
-                            puntuaciones[jugador] += 0
-                        else:
-                            puntuaciones[jugador] = 0
-                
-                # Enviar la respuesta correcta y el ranking actualizado al grupo de multidifusión
-                send_multicast_message(sock, "Respuesta correcta: " + respuesta_correcta)
-                send_ranking(sock, puntuaciones)
-                time.sleep(1)  # Esperar un segundo antes de la siguiente ronda
-            
-            # Determinar al ganador y enviar mensaje de fin del juego al grupo de multidifusión
-            ganador = get_ganador(puntuaciones)
-            send_multicast_message(sock, "¡El juego ha terminado! El ganador es " + ganador)
-            time.sleep(1)  # Esperar un segundo
-            fin_juego = True  # Marcar el fin del juego
+La funcion más destacable de este codigo es la iniciar partida, definida en **multicast_functions**.
+
+```
+def init_game(sock, num_jugadores, num_preguntas):
+        
+        # Inicialización de variables
+        global puntuaciones
+        puntuaciones = {}  # Diccionario para almacenar las puntuaciones de los jugadores
+        fin_juego = False  # Variable para controlar el estado del juego
+        
+        # Anunciar el inicio del juego al grupo de multidifusión
+        send_multicast_message(sock, "Server: ¡El juego va a comenzar!\n")
+        time.sleep(1)  # Esperar un segundo para asegurar que todos los jugadores reciban el mensaje
+        
+        # Bucle para cada pregunta del juego
+        for i in range(num_preguntas):
+        # Enviar mensaje de inicio de ronda al grupo de multidifusión
+        send_multicast_message(sock, f"\nRonda {i+1}/{num_preguntas}\n")
+        time.sleep(1)  # Esperar un segundo
+        
+        # Enviar pregunta y esperar respuestas de los jugadores
+        question, respuesta_correcta = send_question(sock)
+        respuestas = listen_answers(sock, num_jugadores)
+        
+        # Actualizar puntuaciones según las respuestas de los jugadores
+        for jugador in respuestas.keys():
+            respuesta = respuestas[jugador]
+            if respuesta == respuesta_correcta:
+                if jugador in puntuaciones:
+                    puntuaciones[jugador] += 1
+                else:
+                    puntuaciones[jugador] = 1
+            else:
+                if jugador in puntuaciones:
+                    puntuaciones[jugador] += 0
+                else:
+                    puntuaciones[jugador] = 0
+        
+        # Enviar la respuesta correcta y el ranking actualizado al grupo de multidifusión
+        send_multicast_message(sock, "Respuesta correcta: " + respuesta_correcta)
+        send_ranking(sock, puntuaciones)
+        time.sleep(1)  # Esperar un segundo antes de la siguiente ronda
+        
+        # Determinar al ganador y enviar mensaje de fin del juego al grupo de multidifusión
+        ganador = get_ganador(puntuaciones)
+        send_multicast_message(sock, "¡El juego ha terminado! El ganador es " + ganador)
+        time.sleep(1)  # Esperar un segundo
+        fin_juego = True  # Marcar el fin del juego
+```
 Esta función controla el flujo del juego, enviando preguntas, recibiendo respuestas de los jugadores, actualizando las puntuaciones y anunciando el ganador al final. Cada paso se comunica al grupo de multidifusión para que todos los jugadores estén informados en tiempo real.
 
 ### 2. Jugadores (`player1.ipynb` y `player2.ipynb`)
@@ -65,7 +69,7 @@ Cada jugador se conecta al servidor y participa en el juego. Sus responsabilidad
 
 La complejidad en este codigo se encuentra en poder escuchar mensajes y escribir a la vez, al ser dos procesos independiente se ha obtado hacer uso de un thread.
 Además, se crea un hilo para recibir mensajes del grupo de multidifusión y permitir al jugador enviar mensajes mientras espera:
-
+```
         # Crear un hilo para recibir mensajes del grupo de multidifusión
         receive_thread = threading.Thread(target=mf.receive_multicast_messages, args=(multicast_sock, stop_receive_thread))
         receive_thread.start()
@@ -85,6 +89,7 @@ Además, se crea un hilo para recibir mensajes del grupo de multidifusión y per
         receive_thread.join()
         # Cerrar el socket de multidifusión
         multicast_sock.close()
+```
 En este fragmento de código, se crea un hilo receive_thread que ejecuta la función mf.receive_multicast_messages() para recibir mensajes del grupo de multidifusión mientras el jugador espera. Mientras tanto, el jugador puede enviar mensajes al grupo utilizando mf.send_multicast_message(). Si el jugador decide abandonar la partida (message.lower() == "abandono"), se envía un mensaje al grupo anunciando su abandono y se finaliza el hilo de recepción. Una vez que se sale del bucle, se cierra el socket de multidifusión.
 
 ### 3. Funciones de Multidifusión (`multicast_functions.py`)
@@ -94,6 +99,7 @@ Estas funciones facilitan la comunicación entre el servidor y los jugadores a t
 - **Notificación de Eventos:** Notifica a los jugadores sobre eventos importantes durante el juego.
 
 La explicación detallada de las funciones join_multicast_group, send_multicast_message, y receive_multicast_messages dentro de multicast_functions.py:
+```
         def join_multicast_group():
             """
             Esta función crea un socket UDP y se une al grupo de multidifusión especificado.
@@ -130,14 +136,16 @@ La explicación detallada de las funciones join_multicast_group, send_multicast_
                     if fin_juego:  # Verificar si se ha terminado el juego
                         stop_event.set()  # Establecer el evento de parada para detener la recepción de mensajes
                         break  # Salir del bucle de recepción
-        Estas funciones forman la base de la comunicación mediante multidifusión en el juego. join_multicast_group crea un socket UDP y se une al grupo de multidifusión especificado. send_multicast_message envía un mensaje al grupo de multidifusión utilizando el socket proporcionado. receive_multicast_messages recibe mensajes del grupo de multidifusión utilizando el socket proporcionado, deteniéndose cuando se activa el evento de parada. Estas funciones son esenciales para la comunicación entre el servidor y los jugadores durante el juego.
+```
+Estas funciones forman la base de la comunicación mediante multidifusión en el juego. join_multicast_group crea un socket UDP y se une al grupo de multidifusión especificado. send_multicast_message envía un mensaje al grupo de multidifusión utilizando el socket proporcionado. receive_multicast_messages recibe mensajes del grupo de multidifusión utilizando el socket proporcionado, deteniéndose cuando se activa el evento de parada. Estas funciones son esenciales para la comunicación entre el servidor y los jugadores durante el juego.
 
 ### 4. Interfaz para la API de Preguntas y Respuestas (`API.py`)
 Esta interfaz se encarga de obtener preguntas aleatorias de una API externa. Sus funciones incluyen:
 - **Obtención de Preguntas:** Llama a la API para obtener preguntas y respuestas.
 - **Almacenamiento de Preguntas:** Guarda las preguntas en un diccionario para su uso en el juego.
 - **Selección de Preguntas Aleatorias:** Selecciona preguntas aleatorias para enviar a los jugadores.
-        def get_pregunta_aleatoria():
+```
+          def get_pregunta_aleatoria():
             """
             Esta función selecciona aleatoriamente una pregunta del diccionario de preguntas y respuestas,
             prepara las posibles respuestas y la respuesta correcta, y las devuelve en un diccionario.
@@ -159,6 +167,7 @@ Esta interfaz se encarga de obtener preguntas aleatorias de una API externa. Sus
             """
             pregunta_info = preguntas_dict[pregunta]  # Obtiene la información de la pregunta
             return respuesta == pregunta_info["Correct Answer"]  # Compara la respuesta del jugador con la respuesta correcta
+```
 Estas funciones se encargan de manejar las preguntas y respuestas en el juego. get_pregunta_aleatoria selecciona aleatoriamente una pregunta del diccionario de preguntas y prepara las posibles respuestas y la respuesta correcta, devolviéndolas en un diccionario. Por otro lado, check_respuesta verifica si la respuesta proporcionada por el jugador es correcta para una pregunta dada. Ambas funciones son esenciales para el funcionamiento del juego al gestionar las preguntas y validar las respuestas de los jugadores.
 
 ## Ejecución del código 
