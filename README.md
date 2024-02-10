@@ -198,15 +198,15 @@ Estas funciones se encargan de manejar las preguntas y respuestas en el juego. g
 11. Una vez los jugadores hayan respondido todas las preguntas, recibirán el ranking final y se terminará la partida.
 
 ## Capturas de pantalla
-#### Player 1
+### Player 1
 <img width="582" alt="image" src="https://github.com/202006359/Practica-3-Multicast/assets/113789409/cd65737b-65ba-4b7c-9fac-de8ba4368549">
 <img width="582" alt="image" src="https://github.com/202006359/Practica-3-Multicast/assets/113789409/5857fbf5-aa0a-431f-8007-fd981319c06b">
 
-#### Player 2
+### Player 2
 <img width="582" alt="image" src="https://github.com/202006359/Practica-3-Multicast/assets/113789409/2cc26c83-f66d-4637-bccd-ae499a6a77c5">
 <img width="582" alt="image" src="https://github.com/202006359/Practica-3-Multicast/assets/113789409/f1e709ad-99f6-4fd6-add0-f965a9ad862d">
 
-#### Servidor
+### Servidor
 <img width="582" alt="image" src="https://github.com/202006359/Practica-3-Multicast/assets/113789409/1b183afc-982e-4b52-bf43-7b5a94f3b001">
 
 
